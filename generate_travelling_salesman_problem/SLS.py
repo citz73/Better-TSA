@@ -2,12 +2,41 @@ import time
 import numpy as np
 import random
 
+def write_distance_matrix(n, mean, sigma):
+    distance_matrix = np.zeros((n, n))
+    random_distance = []
+    num_distance = int(n * (n-1) / 2)
+    for _ in range(num_distance):
+        distance = 0
+        while distance <= 0:
+            distance = np.random.normal(mean, sigma)
+
+        random_distance.append(distance)
+    
+    iu = np.triu_indices(n, 1)
+    distance_matrix[iu] = random_distance
+    distance_matrix += distance_matrix.T
+
+    np.savetxt(
+        f"{n}_{mean}_{sigma}.out",
+        distance_matrix,
+        delimiter=" ",
+        fmt="%1.4f",
+        header=str(n),
+        comments="",
+    )
+
+
 def read_input(file_name):
     with open(file_name) as f:
         lines = f.read()
-    
-    num_cities = int(lines[0][0])
+        
+    with open(file_name) as f:
+        line = f.readline()
+        
+    num_cities = int(line)
     temp = lines[1:][1:].split('\n')
+    temp = list(filter(None, temp))
     dist_matrix = []
     for n in range(num_cities):
         dist_matrix.append(list(np.float_(temp[n].split(' '))))
@@ -46,9 +75,6 @@ def stochastic_local_search(num_cities, dist_matrix, start):
     while time_elapsed < time_limit:
         current_cost = calculate_cost(dist_matrix, current)
         neighbors = generate_neighbors(current, visited)
-        # if __name__ == "__main__": print(current)
-        # if __name__ == "__main__": print(neighbors)
-        # if __name__ == "__main__": print(visited)
         if len(neighbors) == 0:
             current.append(current[0])
             return current, current_cost
@@ -70,8 +96,15 @@ def stochastic_local_search(num_cities, dist_matrix, start):
     return current, current_cost
 
 if __name__ == '__main__':
+    
+    # n = int(input("Enter the number of locations: "))
+    # mean = float(input("Enter the mean: "))
+    # sigma = float(input("Enter the standard deviation: "))
+
+    # write_distance_matrix(n, mean, sigma)
+    
     start = time.time()
-    file_name = '5_0.0_10.0.out'
+    file_name = '10_0.0_1.0.out'
     num_cities, dist_matrix = read_input(file_name)
     path, cost = stochastic_local_search(num_cities, dist_matrix, start)
     print(path, cost)
