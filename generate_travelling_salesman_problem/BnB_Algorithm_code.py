@@ -10,18 +10,18 @@ min_path = []
 #                    [20, 25, 30, 0]]
 
 
-# dist_matrix =      [[0,67,46,55,75], 
-#                     [67,0,91,122,153],
-#                     [46,91,0,98,65],
-#                     [55,122,98,0,40],
-#                     [75,153,65,40,0]]
+dist_matrix =      [[0,67,46,55,75], 
+                    [67,0,91,122,153],
+                    [46,91,0,98,65],
+                    [55,122,98,0,40],
+                    [75,153,65,40,0]]
 
-dist_matrix =   [[0,5,0,6,5,4],
-                [5,0,2,4,3,0],
-                [0,2,0,1,0,0],
-                [6,4,1,0,7,0],
-                [5,3,0,7,0,3],
-                [4,0,0,0,3,0]]
+# dist_matrix =   [[0,5,0,6,5,4],
+#                 [5,0,2,4,3,0],
+#                 [0,2,0,1,0,0],
+#                 [6,4,1,0,7,0],
+#                 [5,3,0,7,0,3],
+#                 [4,0,0,0,3,0]]
 
 def main():
     visited, curr_cost, parent = set(), 0, 0
@@ -45,36 +45,52 @@ def initial(dist_matrix):
 
 def branch_and_bound_dfs(dist_matrix, visited, path):
     # Not sure if dist_matrix reassignment is needed
-    processed_matrix = initial(dist_matrix)
-    root_matrix = copy_matrix(processed_matrix)
+    root_matrix = copy_matrix(dist_matrix)
+    root_matrix = initial(root_matrix)
     row_cost = matrix_reduction_by_axis(root_matrix, None, 'row')
     col_cost = matrix_reduction_by_axis(root_matrix, None, 'col')
     # print("root matrix: \n", root_matrix)
     # print(row_cost + col_cost)
-    # -- verified completely
     for i in range(len(dist_matrix)):
         visited.add(i)
         path.append(i)
         search(root_matrix, visited, path, row_cost + col_cost, i)
         visited.remove(i)
         path.remove(i)
-
+    
+def calculate_actual_cost(path):
+    cost = 0
+    global dist_matrix
+    # print("distance matrix in calculated: ", dist_matrix)
+    for i in range(len(path)):
+        cost += dist_matrix[path[-1 + i]][path[i]]
+        # print(path[-1+i], path[i])
+    return cost
+    
 def search(curr_matrix, visited, path, curr_cost, curr_node):
     # print(path)
     # base case
     global min_cost
     global min_path
     global dist_matrix
+    # print(path)
     if len(visited) == len(curr_matrix):
         # + dist_matrix[path[-1]][path[0]]:
         # + curr_matrix[path[-1]][path[0]]
-        if min_cost > curr_cost:
-            min_cost = curr_cost
+        # curr_cost = calculate_actual_cost(path)
+        actual_curr_cost = calculate_actual_cost(path)
+        # print(path, curr_cost)
+        if min_cost >= actual_curr_cost:
+            min_cost = actual_curr_cost
             min_path = path[:]
-            # print("path found: ", path, min_cost)
+            print("path found: ", path, min_cost)
         return
 
-    if curr_cost > min_cost:
+    actual_curr_cost = calculate_actual_cost(path)
+    # print("actual_curr_cost: ", actual_curr_cost)
+    # print("min_cost", min_cost)
+    if actual_curr_cost > min_cost:
+        # print("entered here")
         return
     
     pq = []
