@@ -65,19 +65,24 @@ def generate_neighbors(current, visited):
                    neighbors.append(neighbor)
     return neighbors
     
-def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5):  
+def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5, plot_progress=False):  
     current = list(np.random.permutation(num_cities)) # initialize current state
     visited = [current]
     # greedy_rate = 0.5
-    time_limit = 100
+    time_limit = 600
+
+    patience = 3
     
     time_elapsed = 0
+    all_costs = []
     while time_elapsed < time_limit:
         current_cost = calculate_cost(dist_matrix, current)
+        all_costs.append(current_cost)
         neighbors = generate_neighbors(current, visited)
         if len(neighbors) == 0:
             current.append(current[0])
-            return current, current_cost
+
+            return (current, current_cost, all_costs) if plot_progress else (current, current_cost)
         
         if np.random.uniform(0,1) < greedy_rate: # take greedy step
             for n in range(len(neighbors)):
@@ -85,6 +90,11 @@ def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5):
                 new_cost = calculate_cost(dist_matrix, new)
                 if current_cost > new_cost:
                     current = new
+
+            # return if infinite loop
+            if len(all_costs) > patience*2 and len(np.unique(all_costs[-patience:])) == 1: 
+                return (current, current_cost, all_costs) if plot_progress else (current, current_cost)
+
         else: # take random step
             current = random.choice(neighbors)
             
@@ -93,7 +103,8 @@ def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5):
         time_elapsed = time.time() - start
         
     current.append(current[0])
-    return current, current_cost
+
+    return (current, current_cost, all_costs) if plot_progress else (current, current_cost)
 
 if __name__ == '__main__':
     
