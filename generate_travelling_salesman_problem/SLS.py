@@ -65,11 +65,11 @@ def generate_neighbors(current, visited):
                    neighbors.append(neighbor)
     return neighbors
     
-def stochastic_local_search(num_cities, dist_matrix, start):  
+def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5):  
     current = list(np.random.permutation(num_cities)) # initialize current state
     visited = [current]
-    greedy_rate = 0.5
-    time_limit = 10
+    # greedy_rate = 0.5
+    time_limit = 100
     
     time_elapsed = 0
     while time_elapsed < time_limit:
