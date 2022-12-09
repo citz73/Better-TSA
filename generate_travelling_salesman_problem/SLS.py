@@ -3,6 +3,7 @@ import numpy as np
 import random
 import os.path
 import csv
+import sys
 
 def write_distance_matrix(n, mean, sigma):
     distance_matrix = np.zeros((n, n))
@@ -29,27 +30,17 @@ def write_distance_matrix(n, mean, sigma):
     )
 
 
-def read_input(start_time):
-    with open('file_list.csv') as f:
-        file = f.read()
-    file.strip()
-    file_list = file.split('\n')
+def read_input(file_name):
     
-    for file_name in file_list:
-        with open('Competition/' + file_name) as f:
-            num_cities = int(f.readline())
-            
-        with open('Competition/' + file_name) as f:
-            lines = f.read()
-        temp = lines[1:][1:].split('\n')
-        temp = list(filter(None, temp))
-        dist_matrix = []
-        for n in range(num_cities):
-            dist_matrix.append(list(np.float_(temp[n].split(' '))))
+    with open(file_name) as f:
+        num_cities = int(f.readline())
+        lines = f.read()
         
-        print("Current file: " + file_name)
-        _, _ = stochastic_local_search(num_cities, dist_matrix, start_time)
-        print("finish search")
+    temp = lines.split('\n')
+    temp = list(filter(None, temp))
+    dist_matrix = []
+    for n in range(num_cities):
+        dist_matrix.append(list(np.float_(temp[n].split(' '))))
         
     return num_cities, dist_matrix
         
@@ -75,7 +66,7 @@ def generate_neighbors(current, visited):
                    neighbors.append(neighbor)
     return neighbors
     
-def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5, plot_progress=False):  
+def stochastic_local_search(num_cities, dist_matrix, start_time, greedy_rate=0.8, plot_progress=False):  
     current = list(np.random.permutation(num_cities)) # initialize current state
     visited = [current]
     
@@ -90,7 +81,6 @@ def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5, plo
         neighbors = generate_neighbors(current, visited)
         if len(neighbors) == 0:
             current.append(current[0])
-
             return (current, current_cost, all_costs) if plot_progress else (current, current_cost)
         
         if np.random.uniform(0,1) < greedy_rate: # take greedy step
@@ -102,6 +92,7 @@ def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5, plo
 
             # return if infinite loop
             if len(all_costs) > patience*2 and len(np.unique(all_costs[-patience:])) == 1: 
+                current.append(current[0])
                 return (current, current_cost, all_costs) if plot_progress else (current, current_cost)
 
         else: # take random step
@@ -109,46 +100,42 @@ def stochastic_local_search(num_cities, dist_matrix, start, greedy_rate=0.5, plo
             
         if current not in visited:
             visited.append(current)
-        time_elapsed = time.time() - start
+        time_elapsed = time.time() - start_time
         
     current.append(current[0])
-    print("search completed")
-    write_output(current_cost, time_elapsed)
-    print("write completed")
-
     return (current, current_cost, all_costs) if plot_progress else (current, current_cost)
 
-def write_output(current_cost, time_elapsed):
+def main():
     
-    student_id = '3962026, 50568188, 95322969'
-    algorithm_type = 'SLS'
+    mode = sys.argv[1]
     
-    file_name = 'tsp-result-' + algorithm_type + '.csv'
-    
-    if os.path.exists('result/' + file_name):
-        with open(file_name, 'a') as csvfile: 
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(current_cost, time_elapsed)
-    else:
-        with open(file_name, 'w') as csvfile: 
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(student_id)
-            csvwriter.writerow(algorithm_type)
-            csvwriter.writerow(current_cost, time_elapsed)
-
-if __name__ == '__main__':
-    
-    # n = int(input("Enter the number of locations: "))
-    # mean = float(input("Enter the mean: "))
-    # sigma = float(input("Enter the standard deviation: "))
-
-    # write_distance_matrix(n, mean, sigma)
+    if mode == 'g': # generate new distance matrix
+        n = int(input("Enter the number of locations: "))
+        mean = float(input("Enter the mean: "))
+        sigma = float(input("Enter the standard deviation: "))
+        write_distance_matrix(n, mean, sigma)
+        
+        file_name = str(n) + '_' + str(mean) + '_' + str(sigma) + '.out'
+        
+    elif mode == 'e' : # use existing file
+        n = int(input("Enter the number of locations: "))
+        mean = float(input("Enter the mean: "))
+        sigma = float(input("Enter the standard deviation: "))
+        
+        file_name = str(n) + '_' + str(mean) + '_' + str(sigma) + '.out'
     
     start_time = time.time()
-    file_name = '10_0.0_1.0.out'
-    num_cities, dist_matrix = read_input(start_time)
-    # num_cities, dist_matrix = read_input(file_name)
-    # path, cost = stochastic_local_search(num_cities, dist_matrix, start_time)
-    # print(path, cost)
+    num_cities, dist_matrix = read_input(file_name)
+    current_path, current_cost = stochastic_local_search(num_cities, dist_matrix, start_time)
+    
+    print('\n**************')
+    print("*** Path founded:" + str(current_path))
+    print("*** Cost: " + str(round(current_cost,4)))
+    print('**************\n')
+
+if __name__ == '__main__':    
+    main()
+    
+    
     
     
